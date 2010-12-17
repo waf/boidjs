@@ -1,0 +1,111 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<style type="text/css">
+		#target {
+			position:absolute;
+			top:100px;
+			bottom:100px;
+			left:100px;
+			right:100px;
+		}
+		.notice {
+			color: #bbb;
+			font-family:sans-serif;
+			margin:0;
+		}
+		.boid {
+			width:10px;
+			height:10px;
+			background-color:#00f;
+			position:absolute;
+		}
+		html, body {
+			margin:0px;
+			padding:0px;
+			height:100%;
+			overflow:hidden;
+		}
+	</style>
+	<!-- Realistically, IE8 and below are too slow to run this simulation, but we'll let them try. -->
+	<!--[if lte IE 8]>
+	<script src="./ie-utils.js" type="text/javascript"></script>
+	<![endif]-->
+
+	<!-- boid.js contains the interesting boid automata logic -->
+	<script src="./boid.js" type="text/javascript"></script>
+
+	<script type="text/javascript">
+		// this creates and displays the Boid objects.
+		function BoidSimulator(container, numBoids, maxSpeed, refreshRate) {
+			var bounds,
+				intervalHandle,
+				flock = [];
+
+			init();
+
+			function init() {
+				bounds = getBoundingBox(container);
+
+				// create boids
+				for(var i = 0; i < 50; i++) {
+					var pos = new Vector(Math.random()*bounds.x,
+										 Math.random()*bounds.y,
+										 Math.random()*bounds.z);
+					flock.push(new Boid(flock, pos, maxSpeed));
+				}
+
+				// on resize adjust the bounding box so the birds don't fly offscreen
+				window.addEventListener("resize", function() {
+					bounds = getBoundingBox(container);
+				}, false);
+			}
+
+			function getBoundingBox(elem) {
+				var style = document.defaultView.getComputedStyle(elem, null);
+				return new Vector(parseInt(style.width), parseInt(style.height), 500);
+			}
+
+			this.step = function() {
+				container.innerHTML = "";
+				for(var b in flock) {
+					b = flock[b];
+					b.updatePosition(bounds);
+					var div = document.createElement("div");
+					div.className = "boid";
+					div.style.left = b.position.x + "px";
+					div.style.top = b.position.y + "px";
+					container.appendChild(div);
+				}
+			}
+
+			this.start = function() {
+				//in setInterval, 'this' will refer to the window, so use a closure to capture the current scope
+				var simulator = this;
+				intervalHandle = window.setInterval(function() { simulator.step() }, refreshRate);
+			}
+
+			this.stop = function() {
+				clearInterval(intervalHandle);
+			}
+		}
+
+		function init() {
+			var container = document.getElementById("target");
+			var numBoids = 40;
+			var maxSpeed = 20;
+			var refreshRate = 70;
+			var simulation = new BoidSimulator(container, numBoids,maxSpeed,refreshRate);
+			simulation.start();
+		}
+
+		window.addEventListener("load",init,false);
+	</script>
+</head>
+<body>
+	<p class="notice">Works best in a fast browser, such as chrome or firefox 4</p>
+	<div id="target"></div>
+</body>
+</html>
